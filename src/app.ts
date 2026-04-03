@@ -45,9 +45,15 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   fastify.get('/health', async () => ({
     status: 'ok',
-    environment: fastify.config.NODE_ENV,
     timestamp: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
   }));
+
+  fastify.setNotFoundHandler((request, reply) => {
+    void reply.status(404).send({
+      message: `Route ${request.method} ${request.url} not found`,
+    });
+  });
 
   fastify.setErrorHandler((error, request, reply) => {
     request.log.error(error);

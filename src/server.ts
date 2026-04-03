@@ -4,16 +4,13 @@ import { buildApp } from './app.js';
 const start = async () => {
   const app = await buildApp();
 
-  const closeListeners = closeWithGrace(
-    { delay: 500 },
-    async ({ err }) => {
-      if (err) {
-        app.log.error(err, 'Shutting down application due to error');
-      }
+  const closeListeners = closeWithGrace({ delay: 500 }, async ({ err }) => {
+    if (err) {
+      app.log.error(err, 'Shutting down application due to error');
+    }
 
-      await app.close();
-    },
-  );
+    await app.close();
+  });
 
   app.addHook('onClose', async () => {
     closeListeners.uninstall();
