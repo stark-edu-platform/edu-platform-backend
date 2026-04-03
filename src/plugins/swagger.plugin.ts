@@ -4,7 +4,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import { FastifyInstance } from 'fastify';
 
 export default fp(async (fastify: FastifyInstance) => {
-  if (process.env.NODE_ENV === 'production') return;
+  if (fastify.config.NODE_ENV === 'production') return;
 
   await fastify.register(swagger, {
     openapi: {
@@ -15,7 +15,7 @@ export default fp(async (fastify: FastifyInstance) => {
       },
       servers: [
         {
-          url: process.env.BASE_URL || 'http://localhost:3000',
+          url: fastify.config.BASE_URL || 'http://localhost:3000',
         },
       ],
       tags: [

@@ -1,0 +1,78 @@
+import cors from '@fastify/cors';
+import env from '@fastify/env';
+import helmet from '@fastify/helmet';
+import sensible from '@fastify/sensible';
+import Fastify, { FastifyInstance } from 'fastify';
+import { AppConfig, envOptions } from './config/env.js';
+import { loggerConfig } from './config/logger.js';
+import { registerPlugins } from './plugins/index.js';
+
+function parseAllowedOrigins(origins: string) {
+  if (origins.trim() === '*') {
+    return true;
+  }
+
+  return origins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+export async function buildApp(): Promise<FastifyInstance> {
+  const nodeEnv = (process.env.NODE_ENV ??
+    'development') as AppConfig['NODE_ENV'];
+  const fastify = Fastify({
+    logger: loggerConfig[nodeEnv],
+    disableRequestLogging: true,
+    trustProxy: true,
+  });
+
+  await fastify.register(env, envOptions);
+
+  await fastify.register(helmet, {
+    global: true,
+    contentSecurityPolicy:
+      fastify.config.NODE_ENV === 'production' ? undefined : false,
+  });
+
+  await fastify.register(cors, {
+    origin: parseAllowedOrigins(fastify.config.ALLOWED_ORIGINS),
+    credentials: true,
+  });
+
+  await fastify.register(sensible);
+  await registerPlugins(fastify);
+
+  fastify.get('/health', async () => ({
+    status: 'ok',
+    environment: fastify.config.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  }));
+
+  fastify.setErrorHandler((error, request, reply) => {
+    request.log.error(error);
+    if (reply.sent) {
+      return;
+    }
+
+    const normalizedError =
+      error instanceof Error ? error : new Error('Unexpected non-error thrown');
+    const statusCode =
+      typeof error === 'object' &&
+      error !== null &&
+      'statusCode' in error &&
+      typeof error.statusCode === 'number'
+        ? error.statusCode
+        : 500;
+    const isProduction = fastify.config.NODE_ENV === 'production';
+
+    void reply.status(statusCode).send({
+      message:
+        statusCode >= 500 && isProduction
+          ? 'Internal server error'
+          : normalizedError.message,
+    });
+  });
+
+  return fastify;
+}

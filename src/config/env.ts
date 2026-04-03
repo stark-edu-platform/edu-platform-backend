@@ -18,6 +18,10 @@ export const envSchema = {
       type: 'string',
       default: '0.0.0.0',
     },
+    BASE_URL: {
+      type: 'string',
+      default: 'http://localhost:3000',
+    },
 
     // Security & Logic
     ALLOWED_ORIGINS: {
@@ -44,4 +48,15 @@ export const envOptions: FastifyEnvOptions = {
   confKey: 'config', // This makes it available as fastify.config
   schema: envSchema,
   dotenv: true, // Automatically loads .env file in development
+};
+
+export type AppConfig = {
+  NODE_ENV: 'development' | 'production' | 'test';
+  PORT: number;
+  HOST: string;
+  ALLOWED_ORIGINS: string;
+  API_KEY?: string;
+  DATABASE_URL?: string;
+  JWT_SECRET?: string;
+  BASE_URL?: string;
 };
