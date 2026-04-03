@@ -1,0 +1,78 @@
+# ----------------------
+# Node modules
+# ----------------------
+node_modules/
+
+# ----------------------
+# Build output
+# ----------------------
+dist/
+build/
+coverage/
+
+# ----------------------
+# Logs
+# ----------------------
+logs/
+*.log
+pino.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----------------------
+# Environment variables (IMPORTANT)
+# ----------------------
+.env
+.env.*
+!.env.example
+
+# ----------------------
+# OS files
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# IDE / Editor
+# ----------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ----------------------
+# TypeScript
+# ----------------------
+*.tsbuildinfo
+
+# ----------------------
+# Testing
+# ----------------------
+coverage/
+
+# ----------------------
+# Cache / temp
+# ----------------------
+.tmp/
+.cache/
+
+# ----------------------
+# Database / local files
+# ----------------------
+*.sqlite
+*.db
+
+# ----------------------
+# Docker (optional)
+# ----------------------
+docker-compose.override.yml
+
+# ----------------------
+# Misc
+# ----------------------
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
