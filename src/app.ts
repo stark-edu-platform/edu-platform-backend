@@ -43,11 +43,28 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(sensible);
   await registerPlugins(fastify);
 
-  fastify.get('/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: Math.round(process.uptime()),
-  }));
+  fastify.get('/health', async (request, reply) => {
+    try {
+      await fastify.prisma.$queryRaw`SELECT 1`;
+
+      return {
+        status: 'ok',
+        database: 'up',
+        timestamp: new Date().toISOString(),
+        uptime: Math.round(process.uptime()),
+      };
+    } catch (error) {
+      request.log.error(error, 'Health check failed');
+      void reply.status(503);
+
+      return {
+        status: 'degraded',
+        database: 'down',
+        timestamp: new Date().toISOString(),
+        uptime: Math.round(process.uptime()),
+      };
+    }
+  });
 
   fastify.setNotFoundHandler((request, reply) => {
     void reply.status(404).send({
