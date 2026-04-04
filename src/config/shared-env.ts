@@ -48,12 +48,7 @@ export type AppConfig = {
 };
 
 export function readSharedEnv() {
-  const databaseUrl = process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL is required');
-  }
-
+  const databaseUrl = process.env.DATABASE_URL || ''; // need to think about this
   return {
     NODE_ENV: (process.env.NODE_ENV ?? 'development') as AppConfig['NODE_ENV'],
     PORT: Number(process.env.PORT ?? 3000),
