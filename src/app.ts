@@ -6,6 +6,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import { AppConfig, envOptions } from './config/env.js';
 import { loggerConfig } from './config/logger.js';
 import { registerPlugins } from './plugins/index.js';
+import { errorResponse, successResponse } from './utils/api-response.js';
 
 function parseAllowedOrigins(origins: string) {
   if (origins.trim() === '*') {
@@ -47,29 +48,38 @@ export async function buildApp(): Promise<FastifyInstance> {
     try {
       await fastify.prisma.$queryRaw`SELECT 1`;
 
-      return {
+      return successResponse('Health check completed', {
         status: 'ok',
         database: 'up',
         timestamp: new Date().toISOString(),
         uptime: Math.round(process.uptime()),
-      };
+      });
     } catch (error) {
       request.log.error(error, 'Health check failed');
       void reply.status(503);
 
       return {
-        status: 'degraded',
-        database: 'down',
-        timestamp: new Date().toISOString(),
-        uptime: Math.round(process.uptime()),
+        success: false,
+        message: 'Health check failed',
+        error: {
+          statusCode: 503,
+        },
+        data: {
+          status: 'degraded',
+          database: 'down',
+          timestamp: new Date().toISOString(),
+          uptime: Math.round(process.uptime()),
+        },
       };
     }
   });
 
   fastify.setNotFoundHandler((request, reply) => {
-    void reply.status(404).send({
-      message: `Route ${request.method} ${request.url} not found`,
-    });
+    void reply
+      .status(404)
+      .send(
+        errorResponse(404, `Route ${request.method} ${request.url} not found`),
+      );
   });
 
   fastify.setErrorHandler((error, request, reply) => {
@@ -89,12 +99,16 @@ export async function buildApp(): Promise<FastifyInstance> {
         : 500;
     const isProduction = fastify.config.NODE_ENV === 'production';
 
-    void reply.status(statusCode).send({
-      message:
-        statusCode >= 500 && isProduction
-          ? 'Internal server error'
-          : normalizedError.message,
-    });
+    void reply
+      .status(statusCode)
+      .send(
+        errorResponse(
+          statusCode,
+          statusCode >= 500 && isProduction
+            ? 'Internal server error'
+            : normalizedError.message,
+        ),
+      );
   });
 
   return fastify;

@@ -9,9 +9,11 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "start:prod": "node dist/server.js",
+    "create:developer": "tsx src/scripts/createDeveloper.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio",
+    "studio": "prisma studio",
+    "prisma:reset": "prisma migrate reset",
     "pretypecheck": "pnpm run prisma:generate",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
@@ -42,7 +44,8 @@
     "fastify": "^5.8.4",
     "fastify-plugin": "^5.1.0",
     "pg": "^8.20.0",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "resend": "^6.10.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
