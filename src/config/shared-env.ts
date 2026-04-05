@@ -32,10 +32,13 @@ export const sharedEnvProperties = {
   JWT_SECRET: {
     type: 'string',
   },
-  RESEND_API_KEY: {
+  BREVO_API_KEY: {
     type: 'string',
   },
-  MAIL_FROM: {
+  SENDER_NAME: {
+    type: 'string',
+  },
+  SENDER_EMAIL: {
     type: 'string',
   },
   PASSWORD_SETUP_URL_BASE: {
@@ -71,8 +74,9 @@ export type AppConfig = {
   DATABASE_URL: string;
   JWT_SECRET: string;
   BASE_URL?: string;
-  RESEND_API_KEY?: string;
-  MAIL_FROM?: string;
+  BREVO_API_KEY?: string;
+  SENDER_NAME?: string;
+  SENDER_EMAIL?: string;
   PASSWORD_SETUP_URL_BASE?: string;
   PASSWORD_SETUP_TOKEN_TTL_MINUTES: number;
   ACCESS_TOKEN_TTL_MINUTES: number;
@@ -90,8 +94,9 @@ export function readSharedEnv() {
     API_KEY: process.env.API_KEY,
     DATABASE_URL: databaseUrl,
     JWT_SECRET: process.env.JWT_SECRET ?? '',
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    MAIL_FROM: process.env.MAIL_FROM,
+    BREVO_API_KEY: process.env.BREVO_API_KEY,
+    SENDER_NAME: process.env.SENDER_NAME,
+    SENDER_EMAIL: process.env.SENDER_EMAIL,
     PASSWORD_SETUP_URL_BASE: process.env.PASSWORD_SETUP_URL_BASE,
     PASSWORD_SETUP_TOKEN_TTL_MINUTES: Number(
       process.env.PASSWORD_SETUP_TOKEN_TTL_MINUTES ?? 1440,

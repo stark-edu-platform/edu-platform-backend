@@ -5,7 +5,7 @@ import pg from 'pg';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { UserStatus } from '../generated/prisma/enums.js';
 import { readSharedEnv } from '../config/shared-env.js';
-import { sendPasswordSetupEmail } from '../modules/auth/mail.service.js';
+import { sendPasswordSetupEmail } from '../modules/auth/password-setup-email.service.js';
 import { createPasswordSetupInvite } from '../modules/auth/token.service.js';
 import {
   buildUsernameFromEmail,
@@ -35,7 +35,7 @@ async function generateUniqueUsername(prisma: PrismaClient, email: string) {
   }
 }
 
-async function askToResendInvite(
+async function askToSendInviteAgain(
   rl: ReturnType<typeof createInterface>,
   email: string,
 ) {
@@ -58,9 +58,9 @@ async function main() {
       throw new Error('Invalid email address.');
     }
 
-    if (!env.RESEND_API_KEY || !env.MAIL_FROM) {
+    if (!env.BREVO_API_KEY || !env.SENDER_EMAIL) {
       throw new Error(
-        'RESEND_API_KEY and MAIL_FROM must be configured before creating a developer invite.',
+        'BREVO_API_KEY and SENDER_EMAIL must be configured before creating a developer invite.',
       );
     }
 
@@ -92,9 +92,9 @@ async function main() {
           throw new Error('A user with this email already exists.');
         }
 
-        const shouldResend = await askToResendInvite(rl, email);
+        const shouldResend = await askToSendInviteAgain(rl, email);
         if (!shouldResend) {
-          output.write('Invite resend cancelled.\n');
+          output.write('Setup email cancelled.\n');
           return;
         }
 
@@ -106,8 +106,6 @@ async function main() {
         );
 
         await sendPasswordSetupEmail({
-          apiKey: env.RESEND_API_KEY,
-          from: env.MAIL_FROM,
           to: email,
           setupUrl: invite.setupUrl,
         });
@@ -148,8 +146,6 @@ async function main() {
       );
 
       await sendPasswordSetupEmail({
-        apiKey: env.RESEND_API_KEY,
-        from: env.MAIL_FROM,
         to: email,
         setupUrl: invite.setupUrl,
       });
