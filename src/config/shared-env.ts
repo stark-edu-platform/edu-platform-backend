@@ -32,6 +32,27 @@ export const sharedEnvProperties = {
   JWT_SECRET: {
     type: 'string',
   },
+  RESEND_API_KEY: {
+    type: 'string',
+  },
+  MAIL_FROM: {
+    type: 'string',
+  },
+  PASSWORD_SETUP_URL_BASE: {
+    type: 'string',
+  },
+  PASSWORD_SETUP_TOKEN_TTL_MINUTES: {
+    type: 'number',
+    default: 1440,
+  },
+  ACCESS_TOKEN_TTL_MINUTES: {
+    type: 'number',
+    default: 15,
+  },
+  REFRESH_TOKEN_TTL_DAYS: {
+    type: 'number',
+    default: 30,
+  },
 } as const;
 
 export const sharedRequiredEnv = [
@@ -50,6 +71,12 @@ export type AppConfig = {
   DATABASE_URL: string;
   JWT_SECRET: string;
   BASE_URL?: string;
+  RESEND_API_KEY?: string;
+  MAIL_FROM?: string;
+  PASSWORD_SETUP_URL_BASE?: string;
+  PASSWORD_SETUP_TOKEN_TTL_MINUTES: number;
+  ACCESS_TOKEN_TTL_MINUTES: number;
+  REFRESH_TOKEN_TTL_DAYS: number;
 };
 
 export function readSharedEnv() {
@@ -63,5 +90,15 @@ export function readSharedEnv() {
     API_KEY: process.env.API_KEY,
     DATABASE_URL: databaseUrl,
     JWT_SECRET: process.env.JWT_SECRET ?? '',
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    MAIL_FROM: process.env.MAIL_FROM,
+    PASSWORD_SETUP_URL_BASE: process.env.PASSWORD_SETUP_URL_BASE,
+    PASSWORD_SETUP_TOKEN_TTL_MINUTES: Number(
+      process.env.PASSWORD_SETUP_TOKEN_TTL_MINUTES ?? 1440,
+    ),
+    ACCESS_TOKEN_TTL_MINUTES: Number(
+      process.env.ACCESS_TOKEN_TTL_MINUTES ?? 15,
+    ),
+    REFRESH_TOKEN_TTL_DAYS: Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30),
   } satisfies AppConfig;
 }
