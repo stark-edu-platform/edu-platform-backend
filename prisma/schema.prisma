@@ -1,7 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +6,69 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum VerificationType {
+  EMAIL
+  PHONE
+  PASSWORD_RESET
+}
+model User {
+  userId              String   @id @default(uuid())
+
+  name            String?
+  username        String   @unique
+  email           String?  @unique
+  phone           String?  @unique   // 🔥 make unique
+
+  passwordHash    String
+
+  isEmailVerified Boolean  @default(false)
+  isPhoneVerified Boolean  @default(false)
+
+  status          UserStatus @default(ACTIVE)
+
+  refreshTokens   RefreshToken[]
+  verifications   Verification[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([email])
+  @@index([phone])
+  @@index([username])
+}
+model RefreshToken {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  tokenHash    String   // 🔥 hashed token (never store raw)
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  deviceInfo   String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+model Verification {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  type         VerificationType
+  otpHash      String   // 🔥 hash instead of plain OTP
+  expiresAt    DateTime
+  verifiedAt   DateTime?
+  attempts     Int      @default(0) // 🔥 brute-force protection
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([expiresAt])
 }

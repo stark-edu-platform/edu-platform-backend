@@ -34,7 +34,12 @@ export const sharedEnvProperties = {
   },
 } as const;
 
-export const sharedRequiredEnv = ['NODE_ENV', 'PORT', 'DATABASE_URL'] as const;
+export const sharedRequiredEnv = [
+  'NODE_ENV',
+  'PORT',
+  'DATABASE_URL',
+  'JWT_SECRET',
+] as const;
 
 export type AppConfig = {
   NODE_ENV: 'development' | 'production' | 'test';
@@ -43,7 +48,7 @@ export type AppConfig = {
   ALLOWED_ORIGINS: string;
   API_KEY?: string;
   DATABASE_URL: string;
-  JWT_SECRET?: string;
+  JWT_SECRET: string;
   BASE_URL?: string;
 };
 
@@ -57,6 +62,6 @@ export function readSharedEnv() {
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? '*',
     API_KEY: process.env.API_KEY,
     DATABASE_URL: databaseUrl,
-    JWT_SECRET: process.env.JWT_SECRET,
+    JWT_SECRET: process.env.JWT_SECRET ?? '',
   } satisfies AppConfig;
 }

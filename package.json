@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "prisma:reset": "prisma migrate reset",
     "pretypecheck": "pnpm run prisma:generate",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
