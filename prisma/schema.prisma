@@ -19,6 +19,7 @@ enum SystemRole {
 }
 
 enum SchoolStatus {
+  INVITED
   ACTIVE
   INACTIVE
   SUSPENDED

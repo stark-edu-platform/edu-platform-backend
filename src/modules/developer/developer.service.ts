@@ -1,7 +1,12 @@
 import crypto from 'node:crypto';
 import { FastifyInstance } from 'fastify';
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js';
-import { SchoolRole, SchoolStatus, SystemRole, UserStatus } from '../../generated/prisma/enums.js';
+import {
+  SchoolRole,
+  SchoolStatus,
+  SystemRole,
+  UserStatus,
+} from '../../generated/prisma/enums.js';
 import { emailTemplateService } from '../email/email-template.service.js';
 import { createPasswordSetupInvite } from '../auth/token.service.js';
 import {
@@ -10,7 +15,10 @@ import {
   isEmail,
   normalizeEmail,
 } from '../auth/auth.utils.js';
-import { CreateSchoolWithAdminBody } from './developer.types.js';
+import {
+  CreateSchoolWithAdminBody,
+  DeveloperSchoolListItem,
+} from './developer.types.js';
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -88,7 +96,7 @@ export async function createSchoolWithAdmin(
         address: input.address?.trim() || undefined,
         phone: input.schoolPhone?.trim() || undefined,
         email: normalizedSchoolEmail,
-        status: SchoolStatus.ACTIVE,
+        status: SchoolStatus.INVITED,
       },
     });
 
@@ -163,5 +171,62 @@ export async function createSchoolWithAdmin(
     setup: {
       expiresAt: result.invite.expiresAt.toISOString(),
     },
+  };
+}
+
+export async function listSchools(
+  fastify: FastifyInstance,
+): Promise<{ schools: DeveloperSchoolListItem[] }> {
+  const schools = await fastify.prisma.school.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    select: {
+      schoolId: true,
+      name: true,
+      subdomain: true,
+      board: true,
+      email: true,
+      phone: true,
+      status: true,
+      createdAt: true,
+      userSchools: {
+        where: {
+          primaryRole: SchoolRole.ADMIN,
+        },
+        take: 1,
+        select: {
+          user: {
+            select: {
+              userId: true,
+              name: true,
+              email: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return {
+    schools: schools.map((school) => ({
+      schoolId: school.schoolId,
+      name: school.name,
+      subdomain: school.subdomain,
+      board: school.board,
+      email: school.email,
+      phone: school.phone,
+      status: school.status,
+      createdAt: school.createdAt.toISOString(),
+      admin: school.userSchools[0]
+        ? {
+            userId: school.userSchools[0].user.userId,
+            name: school.userSchools[0].user.name,
+            email: school.userSchools[0].user.email,
+            status: school.userSchools[0].user.status,
+          }
+        : null,
+    })),
   };
 }

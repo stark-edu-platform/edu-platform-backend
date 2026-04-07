@@ -1,5 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { UserStatus } from '../../generated/prisma/enums.js';
+import {
+  SchoolRole,
+  SchoolStatus,
+  UserStatus,
+} from '../../generated/prisma/enums.js';
 import {
   createRefreshTokenRecord,
   findActiveRefreshToken,
@@ -298,6 +302,20 @@ export async function setPasswordFromInvite(
       where: { id: verification.id },
       data: {
         verifiedAt: new Date(),
+      },
+    }),
+    fastify.prisma.school.updateMany({
+      where: {
+        status: SchoolStatus.INVITED,
+        userSchools: {
+          some: {
+            userId: verification.userId,
+            primaryRole: SchoolRole.ADMIN,
+          },
+        },
+      },
+      data: {
+        status: SchoolStatus.ACTIVE,
       },
     }),
   ]);

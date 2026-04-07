@@ -13,12 +13,7 @@ export const createSchoolWithAdminRouteSchema = {
   security: [{ bearerAuth: [] }],
   body: {
     type: 'object',
-    required: [
-      'schoolName',
-      'subdomain',
-      'adminName',
-      'adminEmail',
-    ],
+    required: ['schoolName', 'subdomain', 'adminName', 'adminEmail'],
     properties: {
       schoolName: { type: 'string', minLength: 2, maxLength: 120 },
       subdomain: { type: 'string', minLength: 3, maxLength: 80 },
@@ -60,6 +55,45 @@ export const createSchoolWithAdminRouteSchema = {
           type: 'object',
           properties: {
             expiresAt: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    }),
+  },
+};
+
+export const listSchoolsRouteSchema = {
+  tags: ['Developer'],
+  summary: 'Get all schools',
+  security: [{ bearerAuth: [] }],
+  response: {
+    200: successEnvelope({
+      type: 'object',
+      properties: {
+        schools: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              schoolId: { type: 'string' },
+              name: { type: 'string' },
+              subdomain: { type: 'string' },
+              board: { type: 'string', nullable: true },
+              email: { type: 'string', nullable: true },
+              phone: { type: 'string', nullable: true },
+              status: { type: 'string' },
+              createdAt: { type: 'string', format: 'date-time' },
+              admin: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  userId: { type: 'string' },
+                  name: { type: 'string', nullable: true },
+                  email: { type: 'string', nullable: true },
+                  status: { type: 'string' },
+                },
+              },
+            },
           },
         },
       },

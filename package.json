@@ -10,7 +10,7 @@
     "start": "tsx src/server.ts",
     "start:prod": "node dist/server.js",
     "create:developer": "tsx src/scripts/createDeveloper.ts",
-    "prisma:generate": "prisma generate",
+    "generate": "prisma generate",
     "migrate": "prisma migrate deploy",
     "studio": "prisma studio",
     "prisma:reset": "prisma migrate reset",
