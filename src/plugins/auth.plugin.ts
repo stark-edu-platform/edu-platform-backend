@@ -1,6 +1,7 @@
 import fp from 'fastify-plugin';
 import jwt from '@fastify/jwt';
 import { FastifyPluginAsync } from 'fastify';
+import { requireAuth } from '../middlewares/auth.middleware.js';
 import { authRoutes } from '../modules/auth/auth.routes.js';
 
 const authPlugin: FastifyPluginAsync = async (fastify) => {
@@ -8,17 +9,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     secret: fastify.config.JWT_SECRET,
   });
 
-  fastify.decorate(
-    'authenticate',
-    async function authenticate(request, reply): Promise<void> {
-      try {
-        await request.jwtVerify();
-      } catch {
-        void reply.unauthorized('Invalid or expired token');
-      }
-    },
-  );
-
+  fastify.decorate('authenticate', requireAuth);
   await fastify.register(authRoutes);
 };
 

@@ -8,6 +8,7 @@ declare module 'fastify' {
       sub?: string;
       username?: string;
     };
+    userId?: string;
   }
 
   interface FastifyInstance {

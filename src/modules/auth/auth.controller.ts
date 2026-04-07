@@ -43,7 +43,7 @@ export async function logoutController(
 }
 
 export async function meController(request: FastifyRequest) {
-  const userId = (request.user as { sub?: string }).sub;
+  const userId = request.userId;
   if (!userId) {
     throw request.server.httpErrors.unauthorized('Invalid token payload');
   }
@@ -71,7 +71,7 @@ export async function setPasswordController(
 }
 
 export async function logoutAllController(request: FastifyRequest) {
-  const userId = (request.user as { sub?: string }).sub;
+  const userId = request.userId;
   if (!userId) {
     throw request.server.httpErrors.unauthorized('Invalid token payload');
   }
