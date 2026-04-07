@@ -1,24 +1,25 @@
 import { EmailTemplateDefinition } from '../email-template.types.js';
 
-export type SetPasswordTemplateInput = {
+export type SchoolAdminInviteTemplateInput = {
+  schoolName: string;
   setupUrl: string;
 };
 
-export const setPasswordTemplate: EmailTemplateDefinition<SetPasswordTemplateInput> =
+export const schoolAdminInviteTemplate: EmailTemplateDefinition<SchoolAdminInviteTemplateInput> =
   {
-    key: 'setPassword',
-    render: ({ setupUrl }) => ({
-      subject: 'Set your developer account password',
-      textContent: `Developer account invitation
+    key: 'schoolAdminInvite',
+    render: ({ schoolName, setupUrl }) => ({
+      subject: `Set your ${schoolName} admin account password`,
+      textContent: `School admin invitation
 
-Your developer account is ready.
+You have been added as an admin for ${schoolName}.
 
-Set your password and activate the account using this link:
+Set your password and activate your account using this link:
 ${setupUrl}`,
       htmlContent: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
-        <h2 style="margin-bottom: 12px;">Developer account invitation</h2>
-        <p>Your developer account is ready.</p>
+        <h2 style="margin-bottom: 12px;">School admin invitation</h2>
+        <p>You have been added as an admin for <strong>${schoolName}</strong>.</p>
         <p>Click the button below to set your password and activate the account.</p>
         <p style="margin: 24px 0;">
           <a

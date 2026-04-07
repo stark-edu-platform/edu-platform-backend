@@ -3,9 +3,9 @@ import { stdin as input, stdout as output } from 'node:process';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import { PrismaClient } from '../generated/prisma/client.js';
-import { UserStatus } from '../generated/prisma/enums.js';
+import { SystemRole, UserStatus } from '../generated/prisma/enums.js';
 import { readSharedEnv } from '../config/shared-env.js';
-import { sendPasswordSetupEmail } from '../modules/auth/password-setup-email.service.js';
+import { emailTemplateService } from '../modules/email/email-template.service.js';
 import { createPasswordSetupInvite } from '../modules/auth/token.service.js';
 import {
   buildUsernameFromEmail,
@@ -105,9 +105,10 @@ async function main() {
           env.PASSWORD_SETUP_TOKEN_TTL_MINUTES,
         );
 
-        await sendPasswordSetupEmail({
+        await emailTemplateService.sendTemplate({
           to: email,
-          setupUrl: invite.setupUrl,
+          template: 'setPassword',
+          data: { setupUrl: invite.setupUrl },
         });
 
         output.write(`Developer invite resent for ${email}\n`);
@@ -129,6 +130,7 @@ async function main() {
           username,
           passwordHash: placeholderPasswordHash,
           status: UserStatus.INACTIVE,
+          systemRole: SystemRole.DEVELOPER,
           isEmailVerified: false,
         },
         select: {
@@ -145,9 +147,10 @@ async function main() {
         env.PASSWORD_SETUP_TOKEN_TTL_MINUTES,
       );
 
-      await sendPasswordSetupEmail({
+      await emailTemplateService.sendTemplate({
         to: email,
-        setupUrl: invite.setupUrl,
+        template: 'setPassword',
+        data: { setupUrl: invite.setupUrl },
       });
 
       output.write(`Developer invite created for ${email}\n`);

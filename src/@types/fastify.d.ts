@@ -1,3 +1,4 @@
+import { FastifyReply } from 'fastify';
 import { AppConfig } from '../config/env.js';
 import { PrismaClient } from '../generated/prisma/client.js';
 import '@fastify/jwt';
@@ -8,12 +9,17 @@ declare module 'fastify' {
       sub?: string;
       username?: string;
     };
+    authenticatedUserId?: string;
   }
 
   interface FastifyInstance {
     config: AppConfig;
     prisma: PrismaClient;
     authenticate: (
+      request: FastifyRequest,
+      reply: FastifyReply,
+    ) => Promise<void>;
+    authorizeDeveloper: (
       request: FastifyRequest,
       reply: FastifyReply,
     ) => Promise<void>;

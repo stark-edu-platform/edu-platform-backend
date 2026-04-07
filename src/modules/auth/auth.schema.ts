@@ -15,6 +15,20 @@ export const authUserSchema = {
     username: { type: 'string' },
     email: { type: 'string', nullable: true },
     status: { type: 'string' },
+    systemRole: { type: 'string' },
+    schools: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          schoolId: { type: 'string' },
+          name: { type: 'string' },
+          subdomain: { type: 'string' },
+          status: { type: 'string' },
+          primaryRole: { type: 'string' },
+        },
+      },
+    },
   },
 };
 

@@ -11,7 +11,7 @@
     "start:prod": "node dist/server.js",
     "create:developer": "tsx src/scripts/createDeveloper.ts",
     "prisma:generate": "prisma generate",
-    "prisma:migrate:deploy": "prisma migrate deploy",
+    "migrate": "prisma migrate deploy",
     "studio": "prisma studio",
     "prisma:reset": "prisma migrate reset",
     "pretypecheck": "pnpm run prisma:generate",

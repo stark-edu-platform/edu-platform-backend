@@ -44,7 +44,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(sensible);
   await registerPlugins(fastify);
 
-  fastify.get('/health', async (request, reply) => {
+  fastify.get('/api/health', async (request, reply) => {
     try {
       await fastify.prisma.$queryRaw`SELECT 1`;
 

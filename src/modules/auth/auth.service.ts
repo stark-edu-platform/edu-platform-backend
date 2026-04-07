@@ -1,5 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { UserStatus } from '../../generated/prisma/enums.js';
+import {
+  SchoolRole,
+  SchoolStatus,
+  UserStatus,
+} from '../../generated/prisma/enums.js';
 import {
   createRefreshTokenRecord,
   findActiveRefreshToken,
@@ -29,6 +33,8 @@ function toAuthUser(user: AuthUser) {
     username: user.username,
     email: user.email,
     status: user.status,
+    systemRole: user.systemRole,
+    schools: user.schools,
   };
 }
 
@@ -85,6 +91,7 @@ export async function loginUser(
       username: true,
       email: true,
       status: true,
+      systemRole: true,
       passwordHash: true,
     },
   });
@@ -122,6 +129,20 @@ export async function getCurrentUser(fastify: FastifyInstance, userId: string) {
       username: true,
       email: true,
       status: true,
+      systemRole: true,
+      userSchools: {
+        select: {
+          primaryRole: true,
+          school: {
+            select: {
+              schoolId: true,
+              name: true,
+              subdomain: true,
+              status: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -129,7 +150,18 @@ export async function getCurrentUser(fastify: FastifyInstance, userId: string) {
     throw fastify.httpErrors.notFound('User not found');
   }
 
-  return { user: toAuthUser(user) };
+  return {
+    user: toAuthUser({
+      ...user,
+      schools: user.userSchools.map((userSchool) => ({
+        schoolId: userSchool.school.schoolId,
+        name: userSchool.school.name,
+        subdomain: userSchool.school.subdomain,
+        status: userSchool.school.status,
+        primaryRole: userSchool.primaryRole,
+      })),
+    }),
+  };
 }
 
 export async function validateSetupToken(
@@ -270,6 +302,20 @@ export async function setPasswordFromInvite(
       where: { id: verification.id },
       data: {
         verifiedAt: new Date(),
+      },
+    }),
+    fastify.prisma.school.updateMany({
+      where: {
+        status: SchoolStatus.INVITED,
+        userSchools: {
+          some: {
+            userId: verification.userId,
+            primaryRole: SchoolRole.ADMIN,
+          },
+        },
+      },
+      data: {
+        status: SchoolStatus.ACTIVE,
       },
     }),
   ]);
