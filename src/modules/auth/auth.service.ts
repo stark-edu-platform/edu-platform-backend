@@ -30,6 +30,7 @@ function toAuthUser(user: AuthUser) {
     email: user.email,
     status: user.status,
     systemRole: user.systemRole,
+    schools: user.schools,
   };
 }
 
@@ -125,6 +126,19 @@ export async function getCurrentUser(fastify: FastifyInstance, userId: string) {
       email: true,
       status: true,
       systemRole: true,
+      userSchools: {
+        select: {
+          primaryRole: true,
+          school: {
+            select: {
+              schoolId: true,
+              name: true,
+              subdomain: true,
+              status: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -132,7 +146,18 @@ export async function getCurrentUser(fastify: FastifyInstance, userId: string) {
     throw fastify.httpErrors.notFound('User not found');
   }
 
-  return { user: toAuthUser(user) };
+  return {
+    user: toAuthUser({
+      ...user,
+      schools: user.userSchools.map((userSchool) => ({
+        schoolId: userSchool.school.schoolId,
+        name: userSchool.school.name,
+        subdomain: userSchool.school.subdomain,
+        status: userSchool.school.status,
+        primaryRole: userSchool.primaryRole,
+      })),
+    }),
+  };
 }
 
 export async function validateSetupToken(

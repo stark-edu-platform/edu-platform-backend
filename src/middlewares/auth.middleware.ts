@@ -21,5 +21,5 @@ export async function requireAuth(
     throw reply.unauthorized('Invalid token payload');
   }
 
-  request.userId = userId;
+  request.authenticatedUserId = userId;
 }

@@ -15,11 +15,12 @@ export default fp(async (fastify: FastifyInstance) => {
       },
       servers: [
         {
-          url: fastify.config.BASE_URL || 'http://localhost:3000',
+          url: `${fastify.config.BASE_URL || 'http://localhost:3000'}/api`,
         },
       ],
       tags: [
         { name: 'Auth', description: 'Authentication APIs' },
+        { name: 'Developer', description: 'Developer management APIs' },
         { name: 'User', description: 'User APIs' },
       ],
       components: {
