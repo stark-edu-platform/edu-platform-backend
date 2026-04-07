@@ -1,19 +1,21 @@
-type SetPasswordTemplateInput = {
+import { EmailTemplateDefinition } from '../email-template.types.js';
+
+export type SetPasswordTemplateInput = {
   setupUrl: string;
 };
 
-export function buildSetPasswordTemplate({
-  setupUrl,
-}: SetPasswordTemplateInput) {
-  return {
-    subject: 'Set your developer account password',
-    textContent: `Developer account invitation
+export const setPasswordTemplate: EmailTemplateDefinition<SetPasswordTemplateInput> =
+  {
+    key: 'setPassword',
+    render: ({ setupUrl }) => ({
+      subject: 'Set your developer account password',
+      textContent: `Developer account invitation
 
 Your developer account is ready.
 
 Set your password and activate the account using this link:
 ${setupUrl}`,
-    htmlContent: `
+      htmlContent: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
         <h2 style="margin-bottom: 12px;">Developer account invitation</h2>
         <p>Your developer account is ready.</p>
@@ -30,5 +32,5 @@ ${setupUrl}`,
         <p><a href="${setupUrl}">${setupUrl}</a></p>
       </div>
     `,
+    }),
   };
-}
