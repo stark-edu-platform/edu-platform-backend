@@ -28,6 +28,7 @@ export type AuthUser = {
   username: string;
   email: string | null;
   status: string;
+  systemRole: string;
 };
 
 export type AuthResponse = {

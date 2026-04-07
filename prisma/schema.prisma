@@ -13,11 +13,31 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum SystemRole {
+  DEVELOPER
+  USER
+}
+
+enum SchoolStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
 enum VerificationType {
   EMAIL
   PHONE
   PASSWORD_RESET
 }
+
+enum SchoolRole {
+  ADMIN
+  STAFF
+  TEACHER
+  STUDENT
+  PARENT
+}
+
 model User {
   userId              String   @id @default(uuid())
 
@@ -32,17 +52,169 @@ model User {
   isPhoneVerified Boolean  @default(false)
 
   status          UserStatus @default(ACTIVE)
+  systemRole      SystemRole @default(USER)
 
   refreshTokens   RefreshToken[]
   verifications   Verification[]
+  userSchools     UserSchool[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([email])
-  @@index([phone])
+  @@index([systemRole])
   @@index([username])
 }
+
+model School {
+  schoolId        String       @id @default(uuid())
+  name            String
+  subdomain       String       @unique
+  board           String?
+  address         String?
+  phone           String?
+  email           String?
+  status          SchoolStatus @default(ACTIVE)
+  userSchools     UserSchool[]
+  adminProfiles   AdminProfile[]
+  teacherProfiles TeacherProfile[]
+  staffProfiles   StaffProfile[]
+  parentProfiles  ParentProfile[]
+  students        Student[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([subdomain])
+}
+
+model UserSchool {
+  userSchoolId   String                    @id @default(uuid())
+  userId         String
+  schoolId       String
+  primaryRole    SchoolRole
+  isActive       Boolean                   @default(true)
+  joinedAt       DateTime                  @default(now())
+  user           User                      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  school         School                    @relation(fields: [schoolId], references: [schoolId], onDelete: Cascade)
+  secondaryRoles UserSchoolSecondaryRole[]
+  adminProfile   AdminProfile?
+  teacherProfile TeacherProfile?
+  staffProfile   StaffProfile?
+  parentProfile  ParentProfile?
+  student        Student?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  @@unique([userId, schoolId])
+  @@index([schoolId])
+  @@index([primaryRole])
+}
+
+model UserSchoolSecondaryRole {
+  id           String     @id @default(uuid())
+  userSchoolId String
+  role         SchoolRole
+  userSchool   UserSchool @relation(fields: [userSchoolId], references: [userSchoolId], onDelete: Cascade)
+
+  @@unique([userSchoolId, role])
+  @@index([role])
+}
+
+model AdminProfile {
+  adminProfileId String     @id @default(uuid())
+  schoolId       String
+  userSchoolId   String     @unique
+  designation    String?
+  school         School     @relation(fields: [schoolId], references: [schoolId], onDelete: Cascade)
+  userSchool     UserSchool @relation(fields: [userSchoolId], references: [userSchoolId], onDelete: Cascade)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([schoolId])
+}
+
+model TeacherProfile {
+  teacherProfileId String     @id @default(uuid())
+  schoolId         String
+  userSchoolId     String     @unique
+  employeeCode     String?    @unique
+  department       String?
+  qualification    String?
+  school           School     @relation(fields: [schoolId], references: [schoolId], onDelete: Cascade)
+  userSchool       UserSchool @relation(fields: [userSchoolId], references: [userSchoolId], onDelete: Cascade)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([schoolId])
+}
+
+model StaffProfile {
+  staffProfileId String     @id @default(uuid())
+  schoolId       String
+  userSchoolId   String     @unique
+  employeeCode   String?    @unique
+  department     String?
+  designation    String?
+  school         School     @relation(fields: [schoolId], references: [schoolId], onDelete: Cascade)
+  userSchool     UserSchool @relation(fields: [userSchoolId], references: [userSchoolId], onDelete: Cascade)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([schoolId])
+}
+
+model ParentProfile {
+  parentProfileId String          @id @default(uuid())
+  schoolId        String
+  userSchoolId    String          @unique
+  occupation      String?
+  relationshipNotes String?
+  school          School          @relation(fields: [schoolId], references: [schoolId], onDelete: Cascade)
+  userSchool      UserSchool      @relation(fields: [userSchoolId], references: [userSchoolId], onDelete: Cascade)
+  parentStudents  ParentStudent[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([schoolId])
+}
+
+model Student {
+  studentId         String          @id @default(uuid())
+  schoolId          String
+  userSchoolId      String?         @unique
+  admissionNo       String
+  firstName         String
+  lastName          String?
+  dateOfBirth       DateTime?
+  gender            String?
+  admissionDate     DateTime?
+  status            String?
+  school            School          @relation(fields: [schoolId], references: [schoolId], onDelete: Cascade)
+  userSchool        UserSchool?     @relation(fields: [userSchoolId], references: [userSchoolId], onDelete: SetNull)
+  parentStudents    ParentStudent[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([schoolId, admissionNo])
+  @@index([schoolId])
+}
+
+model ParentStudent {
+  parentStudentId String        @id @default(uuid())
+  schoolId        String
+  parentProfileId String
+  studentId       String
+  relation        String?
+  isPrimary       Boolean       @default(false)
+  parentProfile   ParentProfile @relation(fields: [parentProfileId], references: [parentProfileId], onDelete: Cascade)
+  student         Student       @relation(fields: [studentId], references: [studentId], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+
+  @@unique([parentProfileId, studentId])
+  @@index([schoolId])
+  @@index([studentId])
+}
+
 model RefreshToken {
   id           String   @id @default(uuid())
   userId       String

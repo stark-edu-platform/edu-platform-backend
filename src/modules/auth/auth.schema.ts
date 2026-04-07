@@ -15,6 +15,7 @@ export const authUserSchema = {
     username: { type: 'string' },
     email: { type: 'string', nullable: true },
     status: { type: 'string' },
+    systemRole: { type: 'string' },
   },
 };
 

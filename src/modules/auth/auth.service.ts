@@ -29,6 +29,7 @@ function toAuthUser(user: AuthUser) {
     username: user.username,
     email: user.email,
     status: user.status,
+    systemRole: user.systemRole,
   };
 }
 
@@ -85,6 +86,7 @@ export async function loginUser(
       username: true,
       email: true,
       status: true,
+      systemRole: true,
       passwordHash: true,
     },
   });
@@ -122,6 +124,7 @@ export async function getCurrentUser(fastify: FastifyInstance, userId: string) {
       username: true,
       email: true,
       status: true,
+      systemRole: true,
     },
   });
 
