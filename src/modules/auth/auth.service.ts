@@ -12,11 +12,10 @@ import {
   revokeRefreshToken,
 } from './token.service.js';
 import {
-  AuthResponse,
+  AuthSessionResult,
   AuthUser,
   LoginBody,
-  LogoutBody,
-  RefreshTokenBody,
+  RefreshBody,
 } from './auth.types.js';
 import {
   hashPassword,
@@ -49,7 +48,7 @@ async function buildAuthTokens(
     deviceInfo?: string;
     ipAddress?: string;
   },
-): Promise<AuthResponse> {
+): Promise<AuthSessionResult> {
   const accessToken = await fastify.jwt.sign(
     {
       sub: user.userId,
@@ -80,7 +79,7 @@ export async function loginUser(
   context?: {
     ipAddress?: string;
   },
-): Promise<AuthResponse> {
+): Promise<AuthSessionResult> {
   const loginId = normalizeLoginId(input.loginId);
 
   const user = await fastify.prisma.user.findFirst({
@@ -182,14 +181,15 @@ export async function validateSetupToken(
 
 export async function refreshUserSession(
   fastify: FastifyInstance,
-  input: RefreshTokenBody,
+  refreshToken: string,
+  input: RefreshBody | undefined,
   context?: {
     ipAddress?: string;
   },
-): Promise<AuthResponse> {
+): Promise<AuthSessionResult> {
   const refreshTokenRecord = await findActiveRefreshToken(
     fastify.prisma,
-    input.refreshToken,
+    refreshToken,
   );
 
   if (!refreshTokenRecord) {
@@ -220,7 +220,7 @@ export async function refreshUserSession(
       userId: refreshTokenRecord.user.userId,
       ttlDays: fastify.config.REFRESH_TOKEN_TTL_DAYS,
       deviceInfo:
-        input.deviceInfo ?? refreshTokenRecord.deviceInfo ?? undefined,
+        input?.deviceInfo ?? refreshTokenRecord.deviceInfo ?? undefined,
       ipAddress:
         context?.ipAddress ?? refreshTokenRecord.ipAddress ?? undefined,
     });
@@ -247,12 +247,10 @@ export async function refreshUserSession(
 
 export async function logoutUserSession(
   fastify: FastifyInstance,
-  input: LogoutBody,
+  refreshToken?: string,
 ) {
-  const revoked = await revokeRefreshToken(fastify.prisma, input.refreshToken);
-
-  if (revoked.count !== 1) {
-    throw fastify.httpErrors.unauthorized('Invalid or expired refresh token');
+  if (refreshToken) {
+    await revokeRefreshToken(fastify.prisma, refreshToken);
   }
 
   return {
