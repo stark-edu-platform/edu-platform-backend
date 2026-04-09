@@ -1,4 +1,9 @@
-import { FastifyRequest } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
+import {
+  clearRefreshTokenCookie,
+  getRefreshTokenFromCookie,
+  setRefreshTokenCookie,
+} from './auth.cookies.js';
 import {
   getCurrentUser,
   loginUser,
@@ -10,8 +15,7 @@ import {
 } from './auth.service.js';
 import {
   LoginBody,
-  LogoutBody,
-  RefreshTokenBody,
+  RefreshBody,
   SetPasswordBody,
   ValidateSetupTokenBody,
 } from './auth.types.js';
@@ -19,26 +23,57 @@ import { successResponse } from '../../utils/api-response.js';
 
 export async function loginController(
   request: FastifyRequest<{ Body: LoginBody }>,
+  reply: FastifyReply,
 ) {
   const result = await loginUser(request.server, request.body, {
     ipAddress: request.ip,
   });
-  return successResponse('Login successful', result);
+  setRefreshTokenCookie(request.server, reply, result.refreshToken);
+  return successResponse('Login successful', {
+    session: {
+      user: result.user,
+      primaryRole: 'ADMIN',
+      secondaryRoles: [],
+      roleAssignments: [],
+    },
+    accessToken: result.accessToken,
+  });
 }
 
 export async function refreshController(
-  request: FastifyRequest<{ Body: RefreshTokenBody }>,
+  request: FastifyRequest<{ Body: RefreshBody }>,
+  reply: FastifyReply,
 ) {
-  const result = await refreshUserSession(request.server, request.body, {
-    ipAddress: request.ip,
+  const refreshToken = getRefreshTokenFromCookie(request);
+  if (!refreshToken) {
+    clearRefreshTokenCookie(request.server, reply);
+    throw request.server.httpErrors.unauthorized(
+      'Refresh token cookie is missing',
+    );
+  }
+
+  const result = await refreshUserSession(
+    request.server,
+    refreshToken,
+    request.body,
+    {
+      ipAddress: request.ip,
+    },
+  );
+  setRefreshTokenCookie(request.server, reply, result.refreshToken);
+  return successResponse('Token refreshed successfully', {
+    user: result.user,
+    accessToken: result.accessToken,
   });
-  return successResponse('Token refreshed successfully', result);
 }
 
 export async function logoutController(
-  request: FastifyRequest<{ Body: LogoutBody }>,
+  request: FastifyRequest,
+  reply: FastifyReply,
 ) {
-  const result = await logoutUserSession(request.server, request.body);
+  const refreshToken = getRefreshTokenFromCookie(request);
+  const result = await logoutUserSession(request.server, refreshToken);
+  clearRefreshTokenCookie(request.server, reply);
   return successResponse('Logout successful', result);
 }
 
@@ -70,12 +105,16 @@ export async function setPasswordController(
   return successResponse('Password set successfully', result);
 }
 
-export async function logoutAllController(request: FastifyRequest) {
+export async function logoutAllController(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   const userId = request.authenticatedUserId;
   if (!userId) {
     throw request.server.httpErrors.unauthorized('Invalid token payload');
   }
 
   const result = await logoutAllUserSessions(request.server, userId);
+  clearRefreshTokenCookie(request.server, reply);
   return successResponse('Logged out from all sessions successfully', result);
 }

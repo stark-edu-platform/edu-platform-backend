@@ -13,13 +13,8 @@ export type ValidateSetupTokenBody = {
   token: string;
 };
 
-export type RefreshTokenBody = {
-  refreshToken: string;
+export type RefreshBody = {
   deviceInfo?: string;
-};
-
-export type LogoutBody = {
-  refreshToken: string;
 };
 
 export type AuthUserSchool = {
@@ -43,5 +38,8 @@ export type AuthUser = {
 export type AuthResponse = {
   user: AuthUser;
   accessToken: string;
+};
+
+export type AuthSessionResult = AuthResponse & {
   refreshToken: string;
 };

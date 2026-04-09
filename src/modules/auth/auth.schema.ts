@@ -48,9 +48,28 @@ export const loginRouteSchema = {
     200: successEnvelope({
       type: 'object',
       properties: {
-        user: authUserSchema,
+        session: {
+          type: 'object',
+          properties: {
+            user: authUserSchema,
+            primaryRole: { type: 'string' },
+            secondaryRoles: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+            roleAssignments: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  schoolId: { type: 'string' },
+                  role: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
       },
     }),
   },
@@ -61,11 +80,10 @@ export const refreshRouteSchema = {
   summary: 'Refresh access token and rotate refresh token',
   body: {
     type: 'object',
-    required: ['refreshToken'],
     properties: {
-      refreshToken: { type: 'string', minLength: 10 },
       deviceInfo: { type: 'string', maxLength: 255 },
     },
+    additionalProperties: false,
   },
   response: {
     200: successEnvelope({
@@ -73,7 +91,6 @@ export const refreshRouteSchema = {
       properties: {
         user: authUserSchema,
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
       },
     }),
   },
@@ -82,13 +99,6 @@ export const refreshRouteSchema = {
 export const logoutRouteSchema = {
   tags: ['Auth'],
   summary: 'Logout current session',
-  body: {
-    type: 'object',
-    required: ['refreshToken'],
-    properties: {
-      refreshToken: { type: 'string', minLength: 10 },
-    },
-  },
   response: {
     200: successEnvelope({
       type: 'object',

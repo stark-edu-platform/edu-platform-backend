@@ -19,8 +19,7 @@ import {
 } from './auth.schema.js';
 import {
   LoginBody,
-  LogoutBody,
-  RefreshTokenBody,
+  RefreshBody,
   SetPasswordBody,
   ValidateSetupTokenBody,
 } from './auth.types.js';
@@ -32,17 +31,13 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     loginController,
   );
 
-  fastify.post<{ Body: RefreshTokenBody }>(
+  fastify.post<{ Body: RefreshBody }>(
     '/auth/refresh',
     { schema: refreshRouteSchema },
     refreshController,
   );
 
-  fastify.post<{ Body: LogoutBody }>(
-    '/auth/logout',
-    { schema: logoutRouteSchema },
-    logoutController,
-  );
+  fastify.post('/auth/logout', { schema: logoutRouteSchema }, logoutController);
 
   fastify.post<{ Body: ValidateSetupTokenBody }>(
     '/auth/setup-password/validate',

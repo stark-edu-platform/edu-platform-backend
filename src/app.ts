@@ -9,14 +9,29 @@ import { registerPlugins } from './plugins/index.js';
 import { errorResponse, successResponse } from './utils/api-response.js';
 
 function parseAllowedOrigins(origins: string) {
-  if (origins.trim() === '*') {
-    return true;
-  }
-
-  return origins
+  const parsedOrigins = origins
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  const allowAnyOrigin = parsedOrigins.includes('*');
+
+  return (
+    origin: string | undefined,
+    callback: (error: Error | null, allow: boolean) => void,
+  ) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowAnyOrigin || parsedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Origin not allowed by CORS'), false);
+  };
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
