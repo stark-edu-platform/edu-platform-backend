@@ -30,12 +30,7 @@ export async function loginController(
   });
   setRefreshTokenCookie(request.server, reply, result.refreshToken);
   return successResponse('Login successful', {
-    session: {
-      user: result.user,
-      primaryRole: 'ADMIN',
-      secondaryRoles: [],
-      roleAssignments: [],
-    },
+    user: result.user,
     accessToken: result.accessToken,
   });
 }

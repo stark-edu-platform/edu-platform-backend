@@ -48,27 +48,7 @@ export const loginRouteSchema = {
     200: successEnvelope({
       type: 'object',
       properties: {
-        session: {
-          type: 'object',
-          properties: {
-            user: authUserSchema,
-            primaryRole: { type: 'string' },
-            secondaryRoles: {
-              type: 'array',
-              items: { type: 'string' },
-            },
-            roleAssignments: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  schoolId: { type: 'string' },
-                  role: { type: 'string' },
-                },
-              },
-            },
-          },
-        },
+        user: authUserSchema,
         accessToken: { type: 'string' },
       },
     }),
