@@ -41,9 +41,6 @@ export const sharedEnvProperties = {
   SENDER_EMAIL: {
     type: 'string',
   },
-  PASSWORD_SETUP_URL_BASE: {
-    type: 'string',
-  },
   PASSWORD_SETUP_TOKEN_TTL_MINUTES: {
     type: 'number',
     default: 1440,
@@ -77,7 +74,6 @@ export type AppConfig = {
   BREVO_API_KEY?: string;
   SENDER_NAME?: string;
   SENDER_EMAIL?: string;
-  PASSWORD_SETUP_URL_BASE?: string;
   PASSWORD_SETUP_TOKEN_TTL_MINUTES: number;
   ACCESS_TOKEN_TTL_MINUTES: number;
   REFRESH_TOKEN_TTL_DAYS: number;
@@ -97,7 +93,6 @@ export function readSharedEnv() {
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     SENDER_NAME: process.env.SENDER_NAME,
     SENDER_EMAIL: process.env.SENDER_EMAIL,
-    PASSWORD_SETUP_URL_BASE: process.env.PASSWORD_SETUP_URL_BASE,
     PASSWORD_SETUP_TOKEN_TTL_MINUTES: Number(
       process.env.PASSWORD_SETUP_TOKEN_TTL_MINUTES ?? 1440,
     ),

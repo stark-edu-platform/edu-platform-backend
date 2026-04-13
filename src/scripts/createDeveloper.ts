@@ -64,9 +64,7 @@ async function main() {
       );
     }
 
-    const passwordSetupUrlBase =
-      env.PASSWORD_SETUP_URL_BASE ??
-      `${env.BASE_URL ?? 'http://localhost:3000'}/set-password`;
+    const passwordSetupUrlBase = `${env.BASE_URL ?? 'http://localhost:3000'}/set-password`;
 
     const pool = new pg.Pool({
       connectionString: env.DATABASE_URL,

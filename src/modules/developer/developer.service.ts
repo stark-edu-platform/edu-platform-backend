@@ -67,9 +67,7 @@ export async function createSchoolWithAdmin(
     );
   }
 
-  const passwordSetupUrlBase =
-    fastify.config.PASSWORD_SETUP_URL_BASE ??
-    `${fastify.config.BASE_URL ?? 'http://localhost:3000'}/set-password`;
+  const passwordSetupUrlBase = `${fastify.config?.BASE_URL ?? 'http://localhost:3000'}/set-password`;
 
   const result = await fastify.prisma.$transaction(async (tx) => {
     const existingUser = await tx.user.findFirst({
