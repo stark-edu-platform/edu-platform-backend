@@ -77,7 +77,6 @@ export async function meController(request: FastifyRequest) {
   if (!userId) {
     throw request.server.httpErrors.unauthorized('Invalid token payload');
   }
-
   const result = await getCurrentUser(request.server, userId);
   return successResponse('Current user fetched successfully', result);
 }
