@@ -47,184 +47,205 @@ function normalizeSubdomain(value: string) {
   return value.trim().toLowerCase();
 }
 
-export async function createSchoolWithAdmin(
-  fastify: FastifyInstance,
-  input: CreateSchoolWithAdminBody,
-) {
-  const adminEmail = normalizeEmail(input.adminEmail);
-  if (!isEmail(adminEmail)) {
-    throw fastify.httpErrors.badRequest('Invalid admin email address');
-  }
+export default class DeveloperService {
+  constructor(private readonly fastify: FastifyInstance) {}
 
-  const normalizedSchoolEmail = input.schoolEmail
-    ? normalizeEmail(input.schoolEmail)
-    : undefined;
+  async createSchoolWithAdmin(input: CreateSchoolWithAdminBody) {
+    const adminEmail = normalizeEmail(input.adminEmail);
+    if (!isEmail(adminEmail)) {
+      throw this.fastify.httpErrors.badRequest('Invalid admin email address');
+    }
 
-  const subdomain = normalizeSubdomain(input.subdomain);
-  if (!/^[a-z0-9-]+$/.test(subdomain)) {
-    throw fastify.httpErrors.badRequest(
-      'Subdomain can contain only lowercase letters, numbers, and hyphens',
-    );
-  }
+    const normalizedSchoolEmail = input.schoolEmail
+      ? normalizeEmail(input.schoolEmail)
+      : undefined;
 
-  const passwordSetupUrlBase = `${fastify.config?.BASE_URL ?? 'http://localhost:3000'}/set-password`;
-
-  const result = await fastify.prisma.$transaction(async (tx) => {
-    const existingUser = await tx.user.findFirst({
-      where: { email: adminEmail },
-      select: { userId: true },
-    });
-
-    if (existingUser) {
-      throw fastify.httpErrors.conflict(
-        'A user with this admin email already exists',
+    const subdomain = normalizeSubdomain(input.subdomain);
+    if (!/^[a-z0-9-]+$/.test(subdomain)) {
+      throw this.fastify.httpErrors.badRequest(
+        'Subdomain can contain only lowercase letters, numbers, and hyphens',
       );
     }
 
-    const username = await generateUniqueUsername(tx, adminEmail);
-    const placeholderPasswordHash = await hashPassword(
-      `invite-${crypto.randomUUID()}`,
-    );
+    const passwordSetupUrlBase = `${this.fastify.config?.BASE_URL ?? 'http://localhost:3000'}/set-password`;
 
-    const school = await tx.school.create({
-      data: {
-        name: input.schoolName.trim(),
-        subdomain,
-        board: input.board?.trim() || undefined,
-        address: input.address?.trim() || undefined,
-        phone: input.schoolPhone?.trim() || undefined,
-        email: normalizedSchoolEmail,
-        status: SchoolStatus.INVITED,
-      },
-    });
+    try {
+      const result = await this.fastify.prisma.$transaction(async (tx) => {
+        const existingUser = await tx.user.findFirst({
+          where: { email: adminEmail },
+          select: { userId: true },
+        });
 
-    const adminUser = await tx.user.create({
-      data: {
-        name: input.adminName.trim(),
-        username,
-        email: adminEmail,
-        phone: input.adminPhone?.trim() || undefined,
-        passwordHash: placeholderPasswordHash,
-        status: UserStatus.INACTIVE,
-        systemRole: SystemRole.USER,
-        isEmailVerified: false,
-      },
-    });
+        if (existingUser) {
+          throw this.fastify.httpErrors.conflict(
+            'A user with this admin email already exists',
+          );
+        }
 
-    const userSchool = await tx.userSchool.create({
-      data: {
-        userId: adminUser.userId,
-        schoolId: school.schoolId,
-        primaryRole: SchoolRole.ADMIN,
-        isActive: true,
-      },
-    });
+        const username = await generateUniqueUsername(tx, adminEmail);
+        const placeholderPasswordHash = await hashPassword(
+          `invite-${crypto.randomUUID()}`,
+        );
 
-    await tx.adminProfile.create({
-      data: {
-        schoolId: school.schoolId,
-        userSchoolId: userSchool.userSchoolId,
-        designation: input.adminDesignation?.trim() || undefined,
-      },
-    });
+        const school = await tx.school.create({
+          data: {
+            name: input.schoolName.trim(),
+            subdomain,
+            board: input.board?.trim() || undefined,
+            address: input.address?.trim() || undefined,
+            phone: input.schoolPhone?.trim() || undefined,
+            email: normalizedSchoolEmail,
+            status: SchoolStatus.INVITED,
+          },
+        });
 
-    const invite = await createPasswordSetupInvite(
-      tx,
-      adminUser.userId,
-      passwordSetupUrlBase,
-      fastify.config.PASSWORD_SETUP_TOKEN_TTL_MINUTES,
-    );
+        const adminUser = await tx.user.create({
+          data: {
+            name: input.adminName.trim(),
+            username,
+            email: adminEmail,
+            phone: input.adminPhone?.trim() || undefined,
+            passwordHash: placeholderPasswordHash,
+            status: UserStatus.INACTIVE,
+            systemRole: SystemRole.USER,
+            isEmailVerified: false,
+          },
+        });
 
-    return {
-      school,
-      adminUser,
-      invite,
-    };
-  });
+        const userSchool = await tx.userSchool.create({
+          data: {
+            userId: adminUser.userId,
+            schoolId: school.schoolId,
+            primaryRole: SchoolRole.ADMIN,
+            isActive: true,
+          },
+        });
 
-  await emailTemplateService.sendTemplate({
-    to: adminEmail,
-    template: 'schoolAdminInvite',
-    data: {
-      schoolName: result.school.name,
-      setupUrl: result.invite.setupUrl,
-    },
-  });
+        await tx.adminProfile.create({
+          data: {
+            schoolId: school.schoolId,
+            userSchoolId: userSchool.userSchoolId,
+            designation: input.adminDesignation?.trim() || undefined,
+          },
+        });
 
-  return {
-    school: {
-      schoolId: result.school.schoolId,
-      name: result.school.name,
-      subdomain: result.school.subdomain,
-      status: result.school.status,
-    },
-    admin: {
-      userId: result.adminUser.userId,
-      name: result.adminUser.name,
-      username: result.adminUser.username,
-      email: result.adminUser.email,
-      status: result.adminUser.status,
-      systemRole: result.adminUser.systemRole,
-    },
-    setup: {
-      expiresAt: result.invite.expiresAt.toISOString(),
-    },
-  };
-}
+        const invite = await createPasswordSetupInvite(
+          tx,
+          adminUser.userId,
+          passwordSetupUrlBase,
+          this.fastify.config.PASSWORD_SETUP_TOKEN_TTL_MINUTES,
+        );
 
-export async function listSchools(
-  fastify: FastifyInstance,
-): Promise<{ schools: DeveloperSchoolListItem[] }> {
-  const schools = await fastify.prisma.school.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    select: {
-      schoolId: true,
-      name: true,
-      subdomain: true,
-      board: true,
-      email: true,
-      phone: true,
-      status: true,
-      createdAt: true,
-      userSchools: {
-        where: {
-          primaryRole: SchoolRole.ADMIN,
+        return {
+          school,
+          adminUser,
+          invite,
+        };
+      });
+
+      await emailTemplateService.sendTemplate({
+        to: adminEmail,
+        template: 'schoolAdminInvite',
+        data: {
+          schoolName: result.school.name,
+          setupUrl: result.invite.setupUrl,
         },
-        take: 1,
-        select: {
-          user: {
-            select: {
-              userId: true,
-              name: true,
-              email: true,
-              status: true,
+      });
+
+      return {
+        school: {
+          schoolId: result.school.schoolId,
+          name: result.school.name,
+          subdomain: result.school.subdomain,
+          status: result.school.status,
+        },
+        admin: {
+          userId: result.adminUser.userId,
+          name: result.adminUser.name,
+          username: result.adminUser.username,
+          email: result.adminUser.email,
+          status: result.adminUser.status,
+          systemRole: result.adminUser.systemRole,
+        },
+        setup: {
+          expiresAt: result.invite.expiresAt.toISOString(),
+        },
+      };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002' &&
+        Array.isArray(error.meta?.target)
+      ) {
+        if (error.meta.target.includes('subdomain')) {
+          throw this.fastify.httpErrors.conflict(
+            'A school with this subdomain already exists',
+          );
+        }
+
+        if (error.meta.target.includes('phone')) {
+          throw this.fastify.httpErrors.conflict(
+            'A user with this admin phone already exists',
+          );
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async listSchools(): Promise<{ schools: DeveloperSchoolListItem[] }> {
+    const schools = await this.fastify.prisma.school.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        schoolId: true,
+        name: true,
+        subdomain: true,
+        board: true,
+        email: true,
+        phone: true,
+        status: true,
+        createdAt: true,
+        userSchools: {
+          where: {
+            primaryRole: SchoolRole.ADMIN,
+          },
+          take: 1,
+          select: {
+            user: {
+              select: {
+                userId: true,
+                name: true,
+                email: true,
+                status: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  return {
-    schools: schools.map((school) => ({
-      schoolId: school.schoolId,
-      name: school.name,
-      subdomain: school.subdomain,
-      board: school.board,
-      email: school.email,
-      phone: school.phone,
-      status: school.status,
-      createdAt: school.createdAt.toISOString(),
-      admin: school.userSchools[0]
-        ? {
-            userId: school.userSchools[0].user.userId,
-            name: school.userSchools[0].user.name,
-            email: school.userSchools[0].user.email,
-            status: school.userSchools[0].user.status,
-          }
-        : null,
-    })),
-  };
+    return {
+      schools: schools.map((school) => ({
+        schoolId: school.schoolId,
+        name: school.name,
+        subdomain: school.subdomain,
+        board: school.board,
+        email: school.email,
+        phone: school.phone,
+        status: school.status,
+        createdAt: school.createdAt.toISOString(),
+        admin: school.userSchools[0]
+          ? {
+              userId: school.userSchools[0].user.userId,
+              name: school.userSchools[0].user.name,
+              email: school.userSchools[0].user.email,
+              status: school.userSchools[0].user.status,
+            }
+          : null,
+      })),
+    };
+  }
 }
