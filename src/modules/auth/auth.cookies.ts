@@ -9,10 +9,8 @@ function getRefreshCookieOptions(fastify: FastifyInstance) {
 
   return {
     httpOnly: true,
-    // If you use the Proxy (Step 1), 'Lax' is safer and works better.
-    // If you DON'T use the proxy, you MUST use 'None' and 'secure: true'.
     secure: isProduction,
-    sameSite: (isProduction ? 'Lax' : 'Lax') as SameSiteValue,
+    sameSite: (isProduction ? 'None' : 'Lax') as SameSiteValue,
     path: '/',
     maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60,
   };
