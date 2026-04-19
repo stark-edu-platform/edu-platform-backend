@@ -38,7 +38,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   const nodeEnv = (process.env.NODE_ENV ??
     'development') as AppConfig['NODE_ENV'];
   const fastify = Fastify({
-    logger: loggerConfig[nodeEnv],
+    logger: false,
     disableRequestLogging: true,
     trustProxy: true,
   });

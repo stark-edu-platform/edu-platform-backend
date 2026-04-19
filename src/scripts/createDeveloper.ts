@@ -6,7 +6,7 @@ import { PrismaClient } from '../generated/prisma/client.js';
 import { SystemRole, UserStatus } from '../generated/prisma/enums.js';
 import { readSharedEnv } from '../config/shared-env.js';
 import { emailTemplateService } from '../modules/email/email-template.service.js';
-import { createPasswordSetupInvite } from '../modules/auth/token.service.js';
+import { TokenService } from '../modules/auth/token.service.js';
 import {
   buildUsernameFromEmail,
   hashPassword,
@@ -96,7 +96,7 @@ async function main() {
           return;
         }
 
-        const invite = await createPasswordSetupInvite(
+        const invite = await TokenService.createPasswordSetupInvite(
           prisma,
           existingUser.userId,
           passwordSetupUrlBase,
@@ -138,7 +138,7 @@ async function main() {
         },
       });
 
-      const invite = await createPasswordSetupInvite(
+      const invite = await TokenService.createPasswordSetupInvite(
         prisma,
         user.userId,
         passwordSetupUrlBase,

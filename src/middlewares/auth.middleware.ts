@@ -17,9 +17,9 @@ export async function requireAuth(
 
   const payload = request.user as JwtUserPayload | undefined;
   const userId = payload?.sub;
+
   if (!userId) {
     throw reply.unauthorized('Invalid token payload');
   }
-
   request.authenticatedUserId = userId;
 }

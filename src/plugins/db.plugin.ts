@@ -22,7 +22,7 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
     adapter,
     log:
       fastify.config.NODE_ENV === 'development'
-        ? ['query', 'info', 'warn', 'error']
+        ? ['info', 'warn', 'error']
         : ['error'], // Reduced noise for production
   });
 

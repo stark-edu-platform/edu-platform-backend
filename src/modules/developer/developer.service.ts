@@ -8,7 +8,7 @@ import {
   UserStatus,
 } from '../../generated/prisma/enums.js';
 import { emailTemplateService } from '../email/email-template.service.js';
-import { createPasswordSetupInvite } from '../auth/token.service.js';
+import { TokenService } from '../auth/token.service.js';
 import {
   buildUsernameFromEmail,
   hashPassword,
@@ -129,7 +129,7 @@ export default class DeveloperService {
           },
         });
 
-        const invite = await createPasswordSetupInvite(
+        const invite = await TokenService.createPasswordSetupInvite(
           tx,
           adminUser.userId,
           passwordSetupUrlBase,
