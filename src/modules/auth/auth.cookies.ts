@@ -51,6 +51,7 @@ export class AuthCookies {
       sameSite: 'none', // ✅ fix
       path: '/',
       maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60, // ✅ fix
+      domain: '.vidyadesk.online',
     });
   }
 
