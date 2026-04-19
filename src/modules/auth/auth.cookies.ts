@@ -14,72 +14,6 @@ export interface CookieOptions {
 export class AuthCookies {
   private static readonly REFRESH_TOKEN_COOKIE_NAME = 'refreshToken';
 
-  private static getRefreshCookieOptions(
-    fastify: FastifyInstance,
-  ): CookieOptions {
-    const isProduction = fastify.config.NODE_ENV === 'production';
-
-    return {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'None',
-      path: '/',
-      maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60,
-    };
-  }
-
-  private static serializeCookie(
-    name: string,
-    value: string,
-    options: CookieOptions,
-  ): string {
-    const parts = [`${name}=${value}`];
-
-    if (options.maxAge !== undefined) {
-      parts.push(`Max-Age=${Math.floor(options.maxAge)}`);
-    }
-
-    if (options.expires) {
-      parts.push(`Expires=${options.expires.toUTCString()}`);
-    }
-
-    if (options.path) {
-      parts.push(`Path=${options.path}`);
-    }
-
-    if (options.httpOnly) {
-      parts.push('HttpOnly');
-    }
-
-    if (options.secure) {
-      parts.push('Secure');
-    }
-
-    if (options.sameSite) {
-      parts.push(`SameSite=${options.sameSite}`);
-    }
-
-    return parts.join('; ');
-  }
-
-  private static appendSetCookie(
-    reply: FastifyReply,
-    cookieValue: string,
-  ): void {
-    const current = reply.getHeader('Set-Cookie');
-
-    if (!current) {
-      reply.header('Set-Cookie', cookieValue);
-      return;
-    }
-
-    const nextValue = Array.isArray(current)
-      ? [...current, cookieValue]
-      : [String(current), cookieValue];
-
-    reply.header('Set-Cookie', nextValue);
-  }
-
   private static parseCookieHeader(
     cookieHeader?: string,
   ): Record<string, string> {
@@ -121,7 +55,7 @@ export class AuthCookies {
   }
 
   public static clearRefreshTokenCookie(
-    fastify: FastifyInstance,
+    _fastify: FastifyInstance,
     reply: FastifyReply,
   ): void {
     reply.clearCookie(this.REFRESH_TOKEN_COOKIE_NAME, {
