@@ -43,12 +43,12 @@ export class AuthCookies {
     reply: FastifyReply,
     refreshToken: string,
   ): void {
-    const isProduction = fastify.config.NODE_ENV === 'production';
+    // const isProduction = fastify.config.NODE_ENV === 'production';
 
     reply.setCookie(this.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
       httpOnly: true,
-      secure: isProduction, // ✅ fix
-      sameSite: isProduction ? 'none' : 'lax', // ✅ fix
+      secure: true, // ✅ fix
+      sameSite: 'none', // ✅ fix
       path: '/',
       maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60, // ✅ fix
     });

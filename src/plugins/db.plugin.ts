@@ -11,7 +11,7 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
     connectionString: fastify.config.DATABASE_URL,
     max: 20, // Adjust based on your DB tier (Production rule: cores * 2 + 1)
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
   });
 
   // 2. Initialize the Prisma Adapter with the pool
