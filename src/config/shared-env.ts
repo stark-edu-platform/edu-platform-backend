@@ -77,6 +77,7 @@ export type AppConfig = {
   PASSWORD_SETUP_TOKEN_TTL_MINUTES: number;
   ACCESS_TOKEN_TTL_MINUTES: number;
   REFRESH_TOKEN_TTL_DAYS: number;
+  DOMAIN_NAME: string;
 };
 
 export function readSharedEnv() {
@@ -100,5 +101,6 @@ export function readSharedEnv() {
       process.env.ACCESS_TOKEN_TTL_MINUTES ?? 15,
     ),
     REFRESH_TOKEN_TTL_DAYS: Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30),
+    DOMAIN_NAME: process.env.DOMAIN_NAME ?? '',
   } satisfies AppConfig;
 }

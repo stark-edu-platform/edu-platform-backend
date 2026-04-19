@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export type SameSiteValue = 'Strict' | 'Lax' | 'None';
@@ -13,14 +14,6 @@ export interface CookieOptions {
 
 export class AuthCookies {
   private static readonly REFRESH_TOKEN_COOKIE_NAME = 'refreshToken';
-  private static getDomainUrl(fastify: FastifyInstance): string {
-    const baseUrl = fastify.config?.BASE_URL;
-    if (!baseUrl) {
-      throw new Error('BASE_URL is not defined');
-    }
-    const url = new URL(baseUrl);
-    return url.hostname;
-  }
 
   private static parseCookieHeader(
     cookieHeader?: string,
@@ -52,7 +45,8 @@ export class AuthCookies {
     refreshToken: string,
   ): void {
     const isProduction = fastify.config.NODE_ENV === 'production';
-    const domain = this.getDomainUrl(fastify);
+    console.log({ isProduction });
+    const domain = fastify?.config?.DOMAIN_NAME;
     reply.setCookie(this.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
       httpOnly: true,
       secure: isProduction, // ✅ fix
@@ -67,7 +61,7 @@ export class AuthCookies {
     fastify: FastifyInstance,
     reply: FastifyReply,
   ): void {
-    const domain = this.getDomainUrl(fastify);
+    const domain = fastify?.config?.DOMAIN_NAME;
     reply.clearCookie(this.REFRESH_TOKEN_COOKIE_NAME, {
       path: '/',
       domain: `.${domain}`,
