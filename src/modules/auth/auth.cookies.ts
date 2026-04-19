@@ -46,25 +46,23 @@ export class AuthCookies {
   ): void {
     const isProduction = fastify.config.NODE_ENV === 'production';
     console.log({ isProduction });
-    const domain = fastify?.config?.DOMAIN_NAME;
     reply.setCookie(this.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
       httpOnly: true,
       secure: isProduction, // ✅ fix
       sameSite: isProduction ? 'none' : 'lax',
       path: '/',
       maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60, // ✅ fix
-      domain: `.${domain}`,
+      domain: `.vidyadesk.online`,
     });
   }
 
   public static clearRefreshTokenCookie(
-    fastify: FastifyInstance,
+    _fastify: FastifyInstance,
     reply: FastifyReply,
   ): void {
-    const domain = fastify?.config?.DOMAIN_NAME;
     reply.clearCookie(this.REFRESH_TOKEN_COOKIE_NAME, {
       path: '/',
-      domain: `.${domain}`,
+      domain: '.vidyadesk.online',
     });
   }
 
