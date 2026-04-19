@@ -80,16 +80,15 @@ export class TokenService {
     },
   ) {
     const refreshToken = createRawToken();
-    const tokenHash = hashToken(refreshToken);
+    // const tokenHash = hashToken(refreshToken);
     const expiresAt = new Date(
       Date.now() + input.ttlDays * 24 * 60 * 60 * 1000,
     );
-    console.log({ Creating: tokenHash, refreshToken });
 
     await prisma.refreshToken.create({
       data: {
         userId: input.userId,
-        tokenHash,
+        tokenHash: refreshToken,
         expiresAt,
         deviceInfo: input.deviceInfo,
         ipAddress: input.ipAddress,
@@ -103,11 +102,9 @@ export class TokenService {
   }
 
   static async findActiveRefreshToken(prisma: DbClient, refreshToken: string) {
-    const tokenHash = hashToken(refreshToken);
-    console.log({ findActive: tokenHash, refreshToken });
-    return prisma.refreshToken.findFirst({
+    return await prisma.refreshToken.findFirst({
       where: {
-        tokenHash,
+        tokenHash: refreshToken,
         revokedAt: null,
         expiresAt: { gt: new Date() },
       },

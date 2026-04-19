@@ -1,10 +1,13 @@
+import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import env from '@fastify/env';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
-import Fastify, { FastifyInstance } from 'fastify';
+import fastifyCookie from '@fastify/cookie';
+
 import { AppConfig, envOptions } from './config/env.js';
 import { loggerConfig } from './config/logger.js';
+
 import { registerPlugins } from './plugins/index.js';
 import { errorResponse, successResponse } from './utils/api-response.js';
 
@@ -20,43 +23,47 @@ function parseAllowedOrigins(origins: string) {
     origin: string | undefined,
     callback: (error: Error | null, allow: boolean) => void,
   ) => {
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
+    if (!origin) return callback(null, true);
 
     if (allowAnyOrigin || parsedOrigins.includes(origin)) {
-      callback(null, true);
-      return;
+      return callback(null, true);
     }
 
-    callback(new Error('Origin not allowed by CORS'), false);
+    return callback(new Error('Origin not allowed by CORS'), false);
   };
 }
 
 export async function buildApp(): Promise<FastifyInstance> {
   const nodeEnv = (process.env.NODE_ENV ??
     'development') as AppConfig['NODE_ENV'];
+
   const fastify = Fastify({
-    logger: false,
+    logger: loggerConfig[nodeEnv],
     disableRequestLogging: true,
     trustProxy: true,
   });
 
   await fastify.register(env, envOptions);
 
+  // SECURITY
   await fastify.register(helmet, {
-    global: true,
     contentSecurityPolicy:
       fastify.config.NODE_ENV === 'production' ? undefined : false,
   });
 
+  // CORS
   await fastify.register(cors, {
     origin: parseAllowedOrigins(fastify.config.ALLOWED_ORIGINS),
     credentials: true,
   });
 
+  // COOKIE (IMPORTANT)
+  await fastify.register(fastifyCookie, {
+    secret: 'thisismycookiesignrature',
+  });
+
   await fastify.register(sensible);
+
   await registerPlugins(fastify);
 
   fastify.get('/api/health', async (request, reply) => {
@@ -89,6 +96,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     }
   });
 
+  // 404
   fastify.setNotFoundHandler((request, reply) => {
     void reply
       .status(404)
@@ -97,6 +105,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       );
   });
 
+  // ERROR HANDLER
   fastify.setErrorHandler((error, request, reply) => {
     request.log.error(error);
     if (reply.sent) {

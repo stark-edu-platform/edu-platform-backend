@@ -214,7 +214,6 @@ export class AuthService {
       fastify.prisma,
       refreshToken,
     );
-    console.log({ record });
     if (!record) {
       throw fastify.httpErrors.unauthorized('Invalid or expired refresh token');
     }

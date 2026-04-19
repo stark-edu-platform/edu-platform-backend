@@ -37,7 +37,7 @@ export class AuthController {
     reply: FastifyReply,
   ) => {
     const refreshToken = AuthCookies.getRefreshTokenFromCookie(request);
-    console.log({ refreshToken });
+
     if (!refreshToken) {
       AuthCookies.clearRefreshTokenCookie(request.server, reply);
       throw request.server.httpErrors.unauthorized(

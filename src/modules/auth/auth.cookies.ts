@@ -33,7 +33,7 @@ export class AuthCookies {
     value: string,
     options: CookieOptions,
   ): string {
-    const parts = [`${name}=${encodeURIComponent(value)}`];
+    const parts = [`${name}=${value}`];
 
     if (options.maxAge !== undefined) {
       parts.push(`Max-Age=${Math.floor(options.maxAge)}`);
@@ -99,7 +99,7 @@ export class AuthCookies {
 
         // Re-join on '=' to correctly handle values that contain '='.
         const rawValue = rawValueParts.join('=');
-        cookies[rawName] = decodeURIComponent(rawValue);
+        cookies[rawName] = rawValue;
         return cookies;
       }, {});
   }
@@ -109,30 +109,24 @@ export class AuthCookies {
     reply: FastifyReply,
     refreshToken: string,
   ): void {
-    this.appendSetCookie(
-      reply,
-      this.serializeCookie(
-        this.REFRESH_TOKEN_COOKIE_NAME,
-        refreshToken,
-        this.getRefreshCookieOptions(fastify),
-      ),
-    );
+    const isProduction = fastify.config.NODE_ENV === 'production';
+
+    reply.setCookie(this.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+      httpOnly: true,
+      secure: isProduction, // ✅ fix
+      sameSite: isProduction ? 'none' : 'lax', // ✅ fix
+      path: '/',
+      maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60, // ✅ fix
+    });
   }
 
   public static clearRefreshTokenCookie(
     fastify: FastifyInstance,
     reply: FastifyReply,
   ): void {
-    const options = this.getRefreshCookieOptions(fastify);
-
-    this.appendSetCookie(
-      reply,
-      this.serializeCookie(this.REFRESH_TOKEN_COOKIE_NAME, '', {
-        ...options,
-        maxAge: 0,
-        expires: new Date(0),
-      }),
-    );
+    reply.clearCookie(this.REFRESH_TOKEN_COOKIE_NAME, {
+      path: '/',
+    });
   }
 
   public static getRefreshTokenFromCookie(
