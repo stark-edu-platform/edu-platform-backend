@@ -13,6 +13,14 @@ export interface CookieOptions {
 
 export class AuthCookies {
   private static readonly REFRESH_TOKEN_COOKIE_NAME = 'refreshToken';
+  private static getDomainUrl(fastify: FastifyInstance): string {
+    const baseUrl = fastify.config?.BASE_URL;
+    if (!baseUrl) {
+      throw new Error('BASE_URL is not defined');
+    }
+    const url = new URL(baseUrl);
+    return url.hostname;
+  }
 
   private static parseCookieHeader(
     cookieHeader?: string,
@@ -43,24 +51,26 @@ export class AuthCookies {
     reply: FastifyReply,
     refreshToken: string,
   ): void {
-    // const isProduction = fastify.config.NODE_ENV === 'production';
-
+    const isProduction = fastify.config.NODE_ENV === 'production';
+    const domain = this.getDomainUrl(fastify);
     reply.setCookie(this.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
       httpOnly: true,
-      secure: true, // ✅ fix
-      sameSite: 'none', // ✅ fix
+      secure: isProduction, // ✅ fix
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
       maxAge: fastify.config.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60, // ✅ fix
-      domain: '.vidyadesk.online',
+      domain: `.${domain}`,
     });
   }
 
   public static clearRefreshTokenCookie(
-    _fastify: FastifyInstance,
+    fastify: FastifyInstance,
     reply: FastifyReply,
   ): void {
+    const domain = this.getDomainUrl(fastify);
     reply.clearCookie(this.REFRESH_TOKEN_COOKIE_NAME, {
       path: '/',
+      domain: `.${domain}`,
     });
   }
 
