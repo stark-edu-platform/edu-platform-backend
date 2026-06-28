@@ -10,6 +10,12 @@ jobs:
   quality:
     runs-on: ubuntu-latest
 
+    env:
+      # CI only runs schema/type/build checks — it never connects to a DB or
+      # boots the server. Non-secret placeholders satisfy readSharedEnv().
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      JWT_SECRET: ci_placeholder_secret_at_least_32_chars_long
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
