@@ -31,6 +31,7 @@ export const sharedEnvProperties = {
   },
   JWT_SECRET: {
     type: 'string',
+    minLength: 32,
   },
   BREVO_API_KEY: {
     type: 'string',
@@ -89,8 +90,18 @@ export type AppConfig = {
   RATE_LIMIT_WINDOW: string;
 };
 
+// Secrets must never silently default to an empty string: an empty JWT_SECRET
+// degrades token signing and an empty DATABASE_URL hides misconfiguration.
+// readSharedEnv() feeds prisma tooling, scripts and the logger, so fail loudly.
+function requireEnv(name: 'DATABASE_URL' | 'JWT_SECRET'): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 export function readSharedEnv() {
-  const databaseUrl = process.env.DATABASE_URL || ''; // need to think about this
   return {
     NODE_ENV: (process.env.NODE_ENV ?? 'development') as AppConfig['NODE_ENV'],
     PORT: Number(process.env.PORT ?? 3000),
@@ -98,8 +109,8 @@ export function readSharedEnv() {
     BASE_URL: process.env.BASE_URL ?? 'http://localhost:3000',
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS ?? '*',
     API_KEY: process.env.API_KEY,
-    DATABASE_URL: databaseUrl,
-    JWT_SECRET: process.env.JWT_SECRET ?? '',
+    DATABASE_URL: requireEnv('DATABASE_URL'),
+    JWT_SECRET: requireEnv('JWT_SECRET'),
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     SENDER_NAME: process.env.SENDER_NAME,
     SENDER_EMAIL: process.env.SENDER_EMAIL,

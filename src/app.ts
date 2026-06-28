@@ -8,13 +8,22 @@ import { loggerConfig } from './config/logger.js';
 import { registerPlugins } from './plugins/index.js';
 import { errorResponse, successResponse } from './utils/api-response.js';
 
-function parseAllowedOrigins(origins: string) {
+function parseAllowedOrigins(origins: string, nodeEnv: AppConfig['NODE_ENV']) {
   const parsedOrigins = origins
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
   const allowAnyOrigin = parsedOrigins.includes('*');
+
+  if (
+    nodeEnv === 'production' &&
+    (parsedOrigins.length === 0 || allowAnyOrigin)
+  ) {
+    throw new Error(
+      'ALLOWED_ORIGINS must be an explicit allow-list in production (no "*" or empty value)',
+    );
+  }
 
   return (
     origin: string | undefined,
@@ -52,7 +61,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await fastify.register(cors, {
-    origin: parseAllowedOrigins(fastify.config.ALLOWED_ORIGINS),
+    origin: parseAllowedOrigins(
+      fastify.config.ALLOWED_ORIGINS,
+      fastify.config.NODE_ENV,
+    ),
     credentials: true,
   });
 
