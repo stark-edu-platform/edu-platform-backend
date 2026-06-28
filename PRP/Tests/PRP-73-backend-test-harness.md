@@ -1,7 +1,9 @@
 # PRP-73 — Backend unit-test harness (Vitest)
 
-> **Status:** Proposed · **Phase:** 0 (tooling) · **Severity:** 🟠 Med · **Size:** S–M
+> **Status:** ✅ Done (implemented 2026-06-28) · **Phase:** 0 (tooling) · **Severity:** 🟠 Med · **Size:** S–M
 > **Addresses:** missing test runner (`CLAUDE.md`: "Neither project has a test framework configured") · **Depends on:** none · **Unblocks:** the unit-test Validation steps in PRP-15 (`computeEffectiveAccess`), PRP-17 (ability resolution), PRP-45 (`computeStudentDues`), PRP-50 (`resolveGrade`), etc.
+>
+> **Implemented as:** stub at `src/testing/fastify-stub.ts` (kept under `src/` for typecheck + lint coverage rather than `test/helpers/`); added `tsconfig.build.json` and pointed `build` at it so `*.test.ts` + `src/testing/` stay out of `dist/`; added a third seed test `auth.service.test.ts` (`getCurrentUser`) for the no-DB service path. `coverage/` was already git-ignored. Verified green: `pnpm test` (12 tests, 3 files), `pnpm typecheck`, `pnpm test:coverage`, plus `lint`/`format`/`build`.
 
 ## 1. Problem / current state
 The backend has **no test runner** (verified 2026-06-28): `package.json` has only lint/format/typecheck/build/prisma scripts — no `test` script, no `vitest`/`jest`/`node:test` config, no `*.test.ts` files. Static gating (ESLint + Prettier + `tsc --noEmit`) is the only safety net. Yet many PRPs' **Validation** sections call for unit tests of pure logic; there is nowhere to run them.
@@ -51,11 +53,11 @@ The backend has **no test runner** (verified 2026-06-28): `package.json` has onl
 - **Edit:** `package.json` (devDeps + scripts), `tsconfig.json` (types), `.gitignore`
 
 ## 6. Acceptance criteria
-- [ ] `pnpm test` runs Vitest and is **green** with ≥2 real unit tests against existing code.
-- [ ] Source files importing siblings as `./x.js` resolve correctly under Vitest.
-- [ ] A service using `fastify.prisma` is unit-testable via `makeFastifyStub()` with **no database**.
-- [ ] `pnpm test:coverage` emits a report; `coverage/` is git-ignored.
-- [ ] `pnpm typecheck` still passes.
+- [x] `pnpm test` runs Vitest and is **green** with ≥2 real unit tests against existing code.
+- [x] Source files importing siblings as `./x.js` resolve correctly under Vitest.
+- [x] A service using `fastify.prisma` is unit-testable via `makeFastifyStub()` with **no database**.
+- [x] `pnpm test:coverage` emits a report; `coverage/` is git-ignored.
+- [x] `pnpm typecheck` still passes.
 
 ## 7. Validation
 - `pnpm test` · `pnpm test:coverage` green; `pnpm typecheck` unaffected.
