@@ -6,10 +6,11 @@ import {
 } from '../../generated/prisma/enums.js';
 import {
   createRefreshTokenRecord,
-  findActiveRefreshToken,
+  findRefreshTokenByHash,
   findValidPasswordSetupToken,
   revokeAllUserRefreshTokens,
   revokeRefreshToken,
+  revokeRefreshTokenFamily,
 } from './token.service.js';
 import {
   AuthSessionResult,
@@ -187,12 +188,33 @@ export async function refreshUserSession(
     ipAddress?: string;
   },
 ): Promise<AuthSessionResult> {
-  const refreshTokenRecord = await findActiveRefreshToken(
+  const refreshTokenRecord = await findRefreshTokenByHash(
     fastify.prisma,
     refreshToken,
   );
 
   if (!refreshTokenRecord) {
+    throw fastify.httpErrors.unauthorized('Invalid or expired refresh token');
+  }
+
+  const isRevoked = refreshTokenRecord.revokedAt !== null;
+  const isExpired = refreshTokenRecord.expiresAt.getTime() <= Date.now();
+
+  // Reuse detection: a token that was already rotated away (replacedById set)
+  // and is now being replayed signals theft — revoke the entire session family.
+  if (isRevoked && refreshTokenRecord.replacedById !== null) {
+    await revokeRefreshTokenFamily(fastify.prisma, refreshTokenRecord.familyId);
+    fastify.log.warn(
+      {
+        userId: refreshTokenRecord.user.userId,
+        familyId: refreshTokenRecord.familyId,
+      },
+      'refresh token reuse detected',
+    );
+    throw fastify.httpErrors.unauthorized('Invalid or expired refresh token');
+  }
+
+  if (isRevoked || isExpired) {
     throw fastify.httpErrors.unauthorized('Invalid or expired refresh token');
   }
 
@@ -219,10 +241,16 @@ export async function refreshUserSession(
     const nextRefreshToken = await createRefreshTokenRecord(tx, {
       userId: refreshTokenRecord.user.userId,
       ttlDays: fastify.config.REFRESH_TOKEN_TTL_DAYS,
+      familyId: refreshTokenRecord.familyId,
       deviceInfo:
         input?.deviceInfo ?? refreshTokenRecord.deviceInfo ?? undefined,
       ipAddress:
         context?.ipAddress ?? refreshTokenRecord.ipAddress ?? undefined,
+    });
+
+    await tx.refreshToken.update({
+      where: { id: refreshTokenRecord.id },
+      data: { replacedById: nextRefreshToken.id },
     });
 
     return nextRefreshToken;

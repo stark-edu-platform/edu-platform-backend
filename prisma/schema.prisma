@@ -221,6 +221,8 @@ model RefreshToken {
   userId       String
   user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
   tokenHash    String   // 🔥 hashed token (never store raw)
+  familyId     String   // 🔥 shared across one login session's rotations
+  replacedById String?  // 🔥 id of the token this one was rotated into
   expiresAt    DateTime
   revokedAt    DateTime?
   deviceInfo   String?
@@ -229,6 +231,7 @@ model RefreshToken {
   @@index([userId])
   @@index([tokenHash])
   @@index([expiresAt])
+  @@index([familyId])
 }
 model Verification {
   id           String   @id @default(uuid())

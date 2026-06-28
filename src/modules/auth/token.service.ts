@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js';
 import { VerificationType } from '../../generated/prisma/enums.js';
 import {
@@ -77,6 +78,7 @@ export async function createRefreshTokenRecord(
   input: {
     userId: string;
     ttlDays: number;
+    familyId?: string;
     deviceInfo?: string;
     ipAddress?: string;
   },
@@ -84,11 +86,14 @@ export async function createRefreshTokenRecord(
   const refreshToken = createRawToken();
   const tokenHash = hashToken(refreshToken);
   const expiresAt = new Date(Date.now() + input.ttlDays * 24 * 60 * 60 * 1000);
+  // A new login starts a fresh family; a rotation reuses the existing familyId.
+  const familyId = input.familyId ?? randomUUID();
 
-  await prisma.refreshToken.create({
+  const created = await prisma.refreshToken.create({
     data: {
       userId: input.userId,
       tokenHash,
+      familyId,
       expiresAt,
       deviceInfo: input.deviceInfo,
       ipAddress: input.ipAddress,
@@ -98,10 +103,14 @@ export async function createRefreshTokenRecord(
   return {
     refreshToken,
     expiresAt,
+    id: created.id,
+    familyId: created.familyId,
   };
 }
 
-export async function findActiveRefreshToken(
+// Look up a refresh token by hash WITHOUT filtering on revokedAt/expiresAt, so
+// callers can inspect its state — required to detect replay of a rotated token.
+export async function findRefreshTokenByHash(
   prisma: DbClient,
   refreshToken: string,
 ) {
@@ -110,8 +119,6 @@ export async function findActiveRefreshToken(
   return prisma.refreshToken.findFirst({
     where: {
       tokenHash,
-      revokedAt: null,
-      expiresAt: { gt: new Date() },
     },
     include: {
       user: {
@@ -152,6 +159,21 @@ export async function revokeAllUserRefreshTokens(
   return prisma.refreshToken.updateMany({
     where: {
       userId,
+      revokedAt: null,
+    },
+    data: {
+      revokedAt: new Date(),
+    },
+  });
+}
+
+export async function revokeRefreshTokenFamily(
+  prisma: DbClient,
+  familyId: string,
+) {
+  return prisma.refreshToken.updateMany({
+    where: {
+      familyId,
       revokedAt: null,
     },
     data: {
