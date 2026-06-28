@@ -53,6 +53,14 @@ export const sharedEnvProperties = {
     type: 'number',
     default: 30,
   },
+  RATE_LIMIT_MAX: {
+    type: 'number',
+    default: 300,
+  },
+  RATE_LIMIT_WINDOW: {
+    type: 'string',
+    default: '1 minute',
+  },
 } as const;
 
 export const sharedRequiredEnv = [
@@ -77,6 +85,8 @@ export type AppConfig = {
   PASSWORD_SETUP_TOKEN_TTL_MINUTES: number;
   ACCESS_TOKEN_TTL_MINUTES: number;
   REFRESH_TOKEN_TTL_DAYS: number;
+  RATE_LIMIT_MAX: number;
+  RATE_LIMIT_WINDOW: string;
 };
 
 export function readSharedEnv() {
@@ -100,5 +110,7 @@ export function readSharedEnv() {
       process.env.ACCESS_TOKEN_TTL_MINUTES ?? 15,
     ),
     REFRESH_TOKEN_TTL_DAYS: Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30),
+    RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX ?? 300),
+    RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW ?? '1 minute',
   } satisfies AppConfig;
 }

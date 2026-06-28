@@ -29,6 +29,8 @@ const DEFAULT_CONFIG: AppConfig = {
   PASSWORD_SETUP_TOKEN_TTL_MINUTES: 1440,
   ACCESS_TOKEN_TTL_MINUTES: 15,
   REFRESH_TOKEN_TTL_DAYS: 30,
+  RATE_LIMIT_MAX: 300,
+  RATE_LIMIT_WINDOW: '1 minute',
 };
 
 // A Proxy whose every property access yields a memoized `vi.fn()`. One bag backs
